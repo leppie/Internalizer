@@ -29,14 +29,17 @@ namespace Internalizer
 
       var mainfile = args[0];
 
-      var rest = new List<string>(args.Skip(1).SelectMany(GetFilesFromArg).Except(new [] { mainfile }));
+      var rest = args.Skip(1).SelectMany(GetFilesFromArg).Except(new [] { mainfile }).ToList();
 
       var mainass = AssemblyDefinition.ReadAssembly(mainfile);
 
-      var depasses = rest.Select(AssemblyDefinition.ReadAssembly).ToList();
+      var depasses = rest.ConvertAll(AssemblyDefinition.ReadAssembly);
 
-      AssemblyAnalyzer.AnalyzeTypes(mainass, depasses).ForEach(Console.WriteLine);
-      AssemblyAnalyzer.AnalyzeMembers(mainass, depasses).ForEach(Console.WriteLine);
+      AssemblyAnalyzer.AnalyzeTypes(mainass, depasses).OrderBy(x => x.FullName).ForEach(Console.WriteLine);
+      AssemblyAnalyzer.AnalyzeMembers(mainass, depasses).OrderBy(x => x.Name).ForEach(Console.WriteLine);
+
+      // how to do?
+
     }
 
 
