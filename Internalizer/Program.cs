@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Mono.Cecil;
+using Mono.Cecil.Rocks;
 using MoreLinq;
 
 namespace Internalizer
@@ -35,11 +37,42 @@ namespace Internalizer
 
       var depasses = rest.ConvertAll(AssemblyDefinition.ReadAssembly);
 
-      AssemblyAnalyzer.AnalyzeTypes(mainass, depasses).OrderBy(x => x.FullName).ForEach(Console.WriteLine);
-      AssemblyAnalyzer.AnalyzeMembers(mainass, depasses).OrderBy(x => x.Name).ForEach(Console.WriteLine);
+      var types = AssemblyAnalyzer.AnalyzeTypes(mainass, depasses).ToDictionary(x => x.MetadataToken);
+      var members = AssemblyAnalyzer.AnalyzeMembers(mainass, depasses).ToDictionary(x => x.MetadataToken);
+
+      types.Values.OrderBy(x => x.FullName).ForEach(Console.WriteLine);
+      members.Values.OrderBy(x => x.Name).ForEach(Console.WriteLine);
 
       // how to do?
 
+      foreach (var type in mainass.MainModule.GetTypes())
+      {
+        if (type.IsPublic)
+        {
+          if (!types.ContainsKey(type.MetadataToken))
+          {
+            Console.WriteLine("I: " + type);
+            type.IsPublic = false;
+          }
+          else
+          {
+
+          }
+        }
+      }
+
+      File.Move(mainfile, mainfile + ".old");
+
+      using (var key = File.OpenRead("DEVELOPMENT.snk"))
+      {
+        mainass.Write(mainfile, new WriterParameters { StrongNameKeyPair = new StrongNameKeyPair(key) });
+      }
+
+    }
+
+    bool IsPublicOverride(MethodDefinition meth)
+    {
+      return meth.IsVirtual && meth.IsPublic;
     }
 
 

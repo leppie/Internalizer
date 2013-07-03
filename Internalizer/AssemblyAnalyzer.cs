@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Mono.Cecil;
+﻿using Mono.Cecil;
 using Mono.Cecil.Rocks;
 using MoreLinq;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Internalizer
 {
@@ -21,12 +17,11 @@ namespace Internalizer
                     where m != null
                     select m;
 
-      // todo: add overriden methods too
       return musages.DistinctBy(x => x.FullName).
-        SelectMany(WithBaseMembers).DistinctBy(x => x.FullName);
+        SelectMany(WithBaseMethods).DistinctBy(x => x.FullName);
     }
 
-    static IEnumerable<MemberReference> WithBaseMembers(MemberReference arg)
+    static IEnumerable<MemberReference> WithBaseMethods(MemberReference arg)
     {
       yield return arg;
 
@@ -110,19 +105,15 @@ namespace Internalizer
 
     static MemberReference Scrutinize(MemberReference mref)
     {
-      var gentype = mref.DeclaringType as GenericInstanceType;
-      if (gentype != null)
+      var meth = mref as MethodReference;
+      if (meth != null)
       {
-        var methref = mref as MethodReference;
-        if (methref != null)
-        {
-          return methref.Resolve();
-        }
+        return meth.Resolve();
       }
-      var genmeth = mref as MethodReference;
-      if (genmeth != null && genmeth.HasGenericParameters)
+      var field = mref as FieldReference;
+      if (field != null)
       {
-        return genmeth.Resolve();
+        return field.Resolve();
       }
       return mref;
     }
