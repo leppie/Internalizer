@@ -47,7 +47,7 @@ namespace Internalizer
 
       foreach (var type in mainass.MainModule.GetTypes())
       {
-        if (type.IsPublic)
+        if (type.IsPublic && type.Name != "#" && !type.Namespace.StartsWith("record"))
         {
           if (!types.ContainsKey(type.MetadataToken))
           {
@@ -56,7 +56,17 @@ namespace Internalizer
           }
           else
           {
-
+            //foreach (var meth in type.Methods)
+            //{
+            //  if (meth.IsPublic && !IsPublicOverride(meth))
+            //  {
+            //    if (!members.ContainsKey(meth.MetadataToken))
+            //    {
+            //      Console.WriteLine("M: " + meth);
+            //      meth.IsAssembly = true;
+            //    }
+            //  }
+            //}
           }
         }
       }
@@ -70,7 +80,7 @@ namespace Internalizer
 
     }
 
-    bool IsPublicOverride(MethodDefinition meth)
+    static bool IsPublicOverride(MethodDefinition meth)
     {
       return meth.IsVirtual && meth.IsPublic;
     }
